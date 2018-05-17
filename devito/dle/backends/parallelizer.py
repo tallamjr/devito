@@ -27,12 +27,17 @@ class Ompizer(object):
     Shortcuts for the OpenMP language.
     """
 
-    def __init__(self, key):
+    def __init__(self, key, priority):
         """
-        :param key: A function returning True if ``v`` can be parallelized,
+        :param key: A function returning True if an Iteration can be parallelized,
                     False otherwise.
+        :param priority: A function returning an integer value representing the
+                         computational cost of an Iteration. This value may be used
+                         to select what Iteration to parallelize in a nest including
+                         multiple parallelizable Iterations.
         """
         self.key = key
+        self.priority = priority
 
     def _pragma_for(self, root, candidates):
         # Heuristic: if at least two parallel loops are available and the
@@ -76,9 +81,12 @@ class Ompizer(object):
         for tree in retrieve_iteration_tree(iet):
             # Determine the number of consecutive parallelizable Iterations
             candidates = filter_iterations(tree, key=self.key, stop='asap')
-            if not candidates:
+            if len(candidates) == 0:
                 was_tagged = False
                 continue
+            elif len(candidates) > 1:
+                root = max(candidates, key=self.priority)
+                candidates = candidates[candidates.index(root):]
             # Consecutive tagged Iteration go in the same group
             is_tagged = any(i.tag is not None for i in tree)
             key = len(groups) - (is_tagged & was_tagged)

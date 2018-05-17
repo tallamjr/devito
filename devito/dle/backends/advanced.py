@@ -66,21 +66,21 @@ class AdvancedRewriter(BasicRewriter):
         mapper = {}
         blocked = OrderedDict()
         for tree in retrieve_iteration_tree(fold):
+            # Heuristic: Do not block if not embedded within a sequential Iteration
+            if not tree.root.is_Sequential and not ignore_heuristic:
+                continue
+
             # Is the Iteration tree blockable ?
             iterations = [i for i in tree if i.is_Parallel]
             if exclude_innermost:
                 iterations = [i for i in iterations if not i.is_Vectorizable]
+            if not ignore_heuristic:
+                iterations = [i for i in iterations if not i.dim.is_Default]
             if len(iterations) <= 1:
                 continue
             root = iterations[0]
             if not IsPerfectIteration().visit(root):
                 # Illegal/unsupported
-                continue
-            if not tree[0].is_Sequential and not ignore_heuristic:
-                # Heuristic: avoid polluting the generated code with blocked
-                # nests (thus increasing JIT compilation time and affecting
-                # readability) if the blockable tree isn't embedded in a
-                # sequential loop (e.g., a timestepping loop)
                 continue
 
             # Decorate intra-block iterations with an IterationProperty
@@ -216,7 +216,12 @@ class AdvancedRewriter(BasicRewriter):
         """
         def key(i):
             return i.is_ParallelRelaxed and not (i.is_Elementizable or i.is_Vectorizable)
-        return self._parallelizer(key).make_parallel(iet), {}
+
+        def priority(i):
+            # DefaultDimensions are typically used for very short loops
+            return int(not i.dim.is_Default)
+
+        return self._parallelizer(key, priority).make_parallel(iet), {}
 
     @dle_pass
     def _minimize_remainders(self, nodes, state):
