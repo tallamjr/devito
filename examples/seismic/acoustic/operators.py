@@ -1,6 +1,6 @@
 from sympy import Symbol
 
-from devito import Eq, Operator, Function, TimeFunction, Inc, solve
+from devito import Eq, Operator, Function, TimeFunction, Inc
 from examples.seismic import PointSource, Receiver
 
 
@@ -52,16 +52,19 @@ def iso_stencil(field, m, s, damp, kernel, **kwargs):
     H = Symbol('H')
     # Define time sep to be updated
     next = field.forward if kwargs.get('forward', True) else field.backward
+    prev = field.backward if kwargs.get('forward', True) else field.forward
     # Define PDE
-    eq = m * field.dt2 - H - kwargs.get('q', 0)
+    eq = m * field.dt2 - H
     # Add dampening field according to the propagation direction
     eq += damp * field.dt if kwargs.get('forward', True) else -damp * field.dt
     # Solve the symbolic equation for the field to be updated
-    eq_time = solve(eq, next)
+    # eq_time = solve(eq, next)
+    eq_time = (H*s**2 + .5 * s * damp * prev + 2 * m * field -
+               m * prev)/(0.5*s*damp + m)
     # Get the spacial FD
     lap = laplacian(field, m, s, kernel)
     # return the Stencil with H replaced by its symbolic expression
-    return [Eq(next, eq_time.subs({H: lap}))]
+    return [Eq(next, eq_time.subs({H: lap + kwargs.get('q', 0)}))]
 
 
 def ForwardOperator(model, geometry, space_order=4,
