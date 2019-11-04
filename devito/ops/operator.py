@@ -8,7 +8,8 @@ from devito.symbolics import Literal
 from devito.tools import filter_sorted
 
 from devito.ops import ops_configuration
-from devito.ops.transformer import create_ops_dat, create_ops_fetch, opsit
+from devito.ops.transformer import (create_ops_dat, create_ops_memory_fetch,
+                                    initialize_memspace, opsit)
 from devito.ops.types import OpsBlock
 from devito.ops.utils import namespace
 
@@ -69,27 +70,33 @@ class OperatorOPS(Operator):
         name_to_ops_dat = {}
         pre_time_loop = []
         after_time_loop = []
+
+        # Initialize variable indicating the memory space for data transfer.
+        memspace = initialize_memspace()
+        pre_time_loop.append(memspace)
+
         for f in to_dat:
             if f.is_Constant:
                 continue
 
-            pre_time_loop.extend(list(create_ops_dat(f, name_to_ops_dat, ops_block)))
-            # To return the result to Devito, it is necessary to copy the data
-            # from the dat object back to the CPU memory.
-            after_time_loop.extend(create_ops_fetch(f,
-                                                    name_to_ops_dat,
-                                                    self.time_dimension.extreme_max))
+            pre_time_loop.extend(create_ops_dat(f, name_to_ops_dat, ops_block))
 
         # Generate ops kernels for each offloadable iteration tree
         mapper = {}
         for n, (_, tree) in enumerate(affine_trees):
-            pre_loop, ops_kernel, ops_par_loop_call = opsit(
-                tree, n, name_to_ops_dat, ops_block, dims[0]
-            )
+            pre_loop, ops_kernel, ops_par_loop_call, par_to_ops_stencil,\
+                accessibles_info = opsit(tree, n, name_to_ops_dat, ops_block, dims[0])
 
             pre_time_loop.extend(pre_loop)
             self._ops_kernels.append(ops_kernel)
-            mapper[tree[0].root] = ops_par_loop_call
+            # To return the result to Devito, it is necessary to copy the data
+            # from the dat object back to the CPU memory.
+            memory_calls = [create_ops_memory_fetch(f, name_to_ops_dat,
+                                                    par_to_ops_stencil,
+                                                    accessibles_info, memspace)
+                            for f in to_dat if not f.is_Constant]
+
+            mapper[tree[0].root] = List(body=(ops_par_loop_call, memory_calls))
             mapper.update({i.root: mapper.get(i.root) for i in tree})  # Drop trees
 
         iet = Transformer(mapper).visit(iet)
@@ -99,7 +106,7 @@ class OperatorOPS(Operator):
             have the same number of dimensions"
 
         self._headers.append(namespace['ops_define_dimension'](dims[0]))
-        self._includes.extend(['stdio.h', 'ops_seq.h'])
+        self._includes.extend(['stdio.h', 'ops_seq_v2.h'])
 
         body = [ops_init, ops_block_init, *pre_time_loop,
                 ops_partition, iet, *after_time_loop, ops_exit]
