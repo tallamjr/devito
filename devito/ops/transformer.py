@@ -222,19 +222,18 @@ def create_ops_memory_fetch(f, name_to_ops_dat, par_to_ops_stencil, accessibles_
     ----------
     f : Function or TimeFunction
         Devito object that was transfered into the device memory.
-    name_to_ops_dat : dict of {str : :class:`devito.ops.types.OpsDat`}
+    name_to_ops_dat : dict of {str : OpsDat}
         Given a variable name, get the associated OpsDat object.
-    par_to_ops_stencil : dict of {:class:`devito.ops.types.OpsAccessible` :
-                                  :class:`devito.ops.types.OpsStencil`}
-        Link an OpsAccessible to its OpsStencil variable.
-    accessibles_info : dict of {str : :namedTuple:`devito.ops.types.Accessible_info`}
+    par_to_ops_stencil : dict of {str : OpsStencil}
+        Link an OpsAccessible name to its OpsStencil variable.
+    accessibles_info : dict of {str : Accessible_info}
         Contains the time variable used.
-    memspace : :class:`devito.ops.types.OpsMemSpace`
+    memspace : OpsMemSpace
         Specify which memory space should the data be transfered into.
 
     Returns
     ------
-    :class:`devito.ir.iet.nodes.Call`
+    Call
         The actual call to `ops_dat_get_raw_pointer` method from OPS API.
     """
     # Get the OpsDat associated with a Function or TimeFunction f.
@@ -248,13 +247,13 @@ def create_ops_memory_fetch(f, name_to_ops_dat, par_to_ops_stencil, accessibles_
     if f.is_TimeFunction:
         return [namespace['ops_memory_fetch'](ops_dat(v.time),
                                               ops_stencil(v.accessible.name),
-                                              memspace.expr.lhs)
+                                              Byref(memspace.expr.lhs))
                 for k, v in accessibles_info.items() if v.origin_name == f.name]
 
     else:
         return [namespace['ops_memory_fetch'](ops_dat(0),
                                               ops_stencil(f.name),
-                                              memspace.expr.lhs)]
+                                              Byref(memspace.expr.lhs))]
 
 
 def create_ops_par_loop(trees, ops_kernel, parameters, block, name_to_ops_dat,
