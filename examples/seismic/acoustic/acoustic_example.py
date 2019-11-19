@@ -9,22 +9,25 @@ from examples.seismic import demo_model, AcquisitionGeometry
 
 def acoustic_setup(shape=(50, 50, 50), spacing=(15.0, 15.0, 15.0),
                    tn=500., kernel='OT2', space_order=4, nbl=10,
-                   preset='layers-isotropic', **kwargs):
+                   preset='layers-isotropic', nosr=False, **kwargs):
     nrec = kwargs.pop('nrec', shape[0])
     model = demo_model(preset, space_order=space_order, shape=shape, nbl=nbl,
                        dtype=kwargs.pop('dtype', np.float32), spacing=spacing)
 
-    # Source and receiver geometries
-    src_coordinates = np.empty((1, len(spacing)))
-    src_coordinates[0, :] = np.array(model.domain_size) * .5
-    if len(shape) > 1:
-        src_coordinates[0, -1] = model.origin[-1] + 2 * spacing[-1]
+    if not nosr:
+        # Source and receiver geometries
+        src_coordinates = np.empty((1, len(spacing)))
+        src_coordinates[0, :] = np.array(model.domain_size) * .5
+        if len(shape) > 1:
+            src_coordinates[0, -1] = model.origin[-1] + 2 * spacing[-1]
 
-    rec_coordinates = np.empty((nrec, len(spacing)))
-    rec_coordinates[:, 0] = np.linspace(0., model.domain_size[0], num=nrec)
-    if len(shape) > 1:
-        rec_coordinates[:, 1] = np.array(model.domain_size)[1] * .5
-        rec_coordinates[:, -1] = model.origin[-1] + 2 * spacing[-1]
+        rec_coordinates = np.empty((nrec, len(spacing)))
+        rec_coordinates[:, 0] = np.linspace(0., model.domain_size[0], num=nrec)
+        if len(shape) > 1:
+            rec_coordinates[:, 1] = np.array(model.domain_size)[1] * .5
+            rec_coordinates[:, -1] = model.origin[-1] + 2 * spacing[-1]
+    else:
+        src_coordinates = rec_coordinates = None
     geometry = AcquisitionGeometry(model, rec_coordinates, src_coordinates,
                                    t0=0.0, tn=tn, src_type='Ricker', f0=0.010)
 
@@ -35,12 +38,12 @@ def acoustic_setup(shape=(50, 50, 50), spacing=(15.0, 15.0, 15.0),
 
 
 def run(shape=(50, 50, 50), spacing=(20.0, 20.0, 20.0), tn=1000.0,
-        space_order=4, kernel='OT2', nbl=40, full_run=False,
+        space_order=4, kernel='OT2', nbl=40, full_run=False, nosr=False,
         autotune=False, preset='layers-isotropic', checkpointing=False, **kwargs):
 
     solver = acoustic_setup(shape=shape, spacing=spacing, nbl=nbl, tn=tn,
                             space_order=space_order, kernel=kernel,
-                            preset=preset, **kwargs)
+                            preset=preset, nosr=nosr, **kwargs)
 
     info("Applying Forward")
     # Whether or not we save the whole time history. We only need the full wavefield
@@ -100,7 +103,9 @@ if __name__ == "__main__":
     parser.add_argument("--constant", default=False, action='store_true',
                         help="Constant velocity model, default is a two layer model")
     parser.add_argument("--checkpointing", default=False, action='store_true',
-                        help="Constant velocity model, default is a two layer model")
+                        help="Use checkpointing for the gradient calculation")
+    parser.add_argument("--no-src-rec", dest='nosr', default=False, action='store_true',
+                        help="Use checkpointing for the gradient calculation")
     args = parser.parse_args()
 
     # 3D preset parameters
@@ -111,4 +116,4 @@ if __name__ == "__main__":
     run(shape=shape, spacing=spacing, nbl=args.nbl, tn=tn,
         space_order=args.space_order, preset=preset, kernel=args.kernel,
         autotune=args.autotune, dse=args.dse, dle=args.dle, full_run=args.full,
-        checkpointing=args.checkpointing)
+        checkpointing=args.checkpointing, nosr=args.nosr)

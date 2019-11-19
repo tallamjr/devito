@@ -88,23 +88,26 @@ def ForwardOperator(model, geometry, space_order=4,
     u = TimeFunction(name='u', grid=model.grid,
                      save=geometry.nt if save else None,
                      time_order=2, space_order=space_order)
-    src = PointSource(name='src', grid=geometry.grid, time_range=geometry.time_axis,
-                      npoint=geometry.nsrc)
-
-    rec = Receiver(name='rec', grid=geometry.grid, time_range=geometry.time_axis,
-                   npoint=geometry.nrec)
 
     s = model.grid.stepping_dim.spacing
     eqn = iso_stencil(u, m, s, damp, kernel)
 
-    # Construct expression to inject source values
-    src_term = src.inject(field=u.forward, expr=src * s**2 / m)
+    if geometry.nsrc > 0:
+        src = PointSource(name='src', grid=geometry.grid, time_range=geometry.time_axis,
+                          npoint=geometry.nsrc)
 
-    # Create interpolation expression for receivers
-    rec_term = rec.interpolate(expr=u)
+        # Construct expression to inject source values
+        eqn += src.inject(field=u.forward, expr=src * s**2 / m)
+
+    if geometry.nrec > 0:
+        rec = Receiver(name='rec', grid=geometry.grid, time_range=geometry.time_axis,
+                       npoint=geometry.nrec)
+
+        # Create interpolation expression for receivers
+        eqn += rec.interpolate(expr=u)
+
     # Substitute spacing terms to reduce flops
-    return Operator(eqn + src_term + rec_term, subs=model.spacing_map,
-                    name='Forward', **kwargs)
+    return Operator(eqn, subs=model.spacing_map, name='Forward', **kwargs)
 
 
 def AdjointOperator(model, geometry, space_order=4,

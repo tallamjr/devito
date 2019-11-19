@@ -21,9 +21,7 @@ class AcquisitionGeometry(Pickable):
         would come from a segy_read (at property call rather than at init)
         """
         self.rec_positions = rec_positions
-        self._nrec = rec_positions.shape[0]
         self.src_positions = src_positions
-        self._nsrc = src_positions.shape[0]
         self._src_type = kwargs.get('src_type')
         assert self.src_type in sources
         self._f0 = kwargs.get('f0')
@@ -82,11 +80,11 @@ class AcquisitionGeometry(Pickable):
 
     @property
     def nrec(self):
-        return self._nrec
+        return 0 if self.rec_positions is None else self.rec_positions.shape[0]
 
     @property
     def nsrc(self):
-        return self._nsrc
+        return 0 if self.src_positions is None else self.src_positions.shape[0]
 
     @property
     def dtype(self):
@@ -94,20 +92,22 @@ class AcquisitionGeometry(Pickable):
 
     @property
     def rec(self):
-        return Receiver(name='rec', grid=self.grid,
-                        time_range=self.time_axis, npoint=self.nrec,
-                        coordinates=self.rec_positions)
+        if self.nrec > 0:
+            return Receiver(name='rec', grid=self.grid,
+                            time_range=self.time_axis, npoint=self.nrec,
+                            coordinates=self.rec_positions)
 
     @property
     def src(self):
-        if self.src_type is None:
-            return PointSource(name='src', grid=self.grid,
-                               time_range=self.time_axis, npoint=self.nsrc,
-                               coordinates=self.src_positions)
-        else:
-            return sources[self.src_type](name='src', grid=self.grid, f0=self.f0,
-                                          time_range=self.time_axis, npoint=self.nsrc,
-                                          coordinates=self.src_positions)
+        if self.nsrc > 0:
+            if self.src_type is None:
+                return PointSource(name='src', grid=self.grid,
+                                   time_range=self.time_axis, npoint=self.nsrc,
+                                   coordinates=self.src_positions)
+            else:
+                return sources[self.src_type](name='src', grid=self.grid, f0=self.f0,
+                                              time_range=self.time_axis, npoint=self.nsrc,
+                                              coordinates=self.src_positions)
 
     _pickle_args = ['model', 'rec_positions', 'src_positions', 't0', 'tn']
     _pickle_kwargs = ['f0', 'src_type']

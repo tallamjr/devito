@@ -93,12 +93,19 @@ class AcousticWaveSolver(object):
         -------
         Receiver, wavefield and performance summary
         """
-        # Source term is read-only, so re-use the default
-        src = src or self.geometry.src
-        # Create a new receiver object to store the result
-        rec = rec or Receiver(name='rec', grid=self.model.grid,
-                              time_range=self.geometry.time_axis,
-                              coordinates=self.geometry.rec_positions)
+        if self.geometry.nsrc > 0:
+            # Source term is read-only, so re-use the default
+            src = src or self.geometry.src
+            kwargs['src'] = src
+        if self.geometry.nrec > 0:
+            # Create a new receiver object to store the result
+            rec = rec or Receiver(name='rec', grid=self.model.grid,
+                                  time_range=self.geometry.time_axis,
+                                  coordinates=self.geometry.rec_positions)
+            kwargs['rec'] = rec
+
+        if self.geometry.nrec == 0 and self.geometry.nsrc == 0:
+            kwargs['time_M'] = self.geometry.nt
 
         # Create the forward wavefield if not provided
         u = u or TimeFunction(name='u', grid=self.model.grid,
@@ -109,8 +116,8 @@ class AcousticWaveSolver(object):
         vp = vp or self.model.vp
 
         # Execute operator and return wavefield and receiver data
-        summary = self.op_fwd(save).apply(src=src, rec=rec, u=u, vp=vp,
-                                          dt=kwargs.pop('dt', self.dt), **kwargs)
+        dt = kwargs.pop('dt', self.dt)
+        summary = self.op_fwd(save).apply(u=u, vp=vp, dt=dt, **kwargs)
         return rec, u, summary
 
     def adjoint(self, rec, srca=None, v=None, vp=None, **kwargs):
