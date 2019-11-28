@@ -114,10 +114,12 @@ class Grid(ArgProvider):
         else:
             self._dimensions = dimensions
 
+        self._distributor = Distributor(self.shape, self.dimensions, comm)
+
         # Initialize SubDomains
         subdomains = tuple(i for i in (Domain(), Interior(), *as_tuple(subdomains)))
         for i in subdomains:
-            i.__subdomain_finalize__(self.dimensions, self.shape)
+            i.__subdomain_finalize__(self.dimensions, self.shape, self._distributor)
         self._subdomains = subdomains
 
         origin = as_tuple(origin or tuple(0. for _ in self.shape))
@@ -137,8 +139,6 @@ class Grid(ArgProvider):
             self._stepping_dim = self._make_stepping_dim(self.time_dim)
         else:
             raise ValueError("`time_dimension` must be None or of type TimeDimension")
-
-        self._distributor = Distributor(self.shape, self.dimensions, comm)
 
     def __repr__(self):
         return "Grid[extent=%s, shape=%s, dimensions=%s]" % (
@@ -344,7 +344,7 @@ class SubDomain(object):
             raise ValueError("SubDomain requires a `name`")
         self._dimensions = None
 
-    def __subdomain_finalize__(self, dimensions, shape):
+    def __subdomain_finalize__(self, dimensions, shape, distributor=None):
         # Create the SubDomain's SubDimensions
         sub_dimensions = []
         for k, v in self.define(dimensions).items():
@@ -519,10 +519,10 @@ class SubDomainSet(SubDomain):
             n = Dimension(name='n')
             self.implicit_dimension = n
         self._n_domains = kwargs.get('N', 1)
-        self._bounds = kwargs.get('bounds', None)
+        self._global_bounds = kwargs.get('bounds', None)
         self._implicit_exprs = None
 
-    def __subdomain_finalize__(self, dimensions, shape):
+    def __subdomain_finalize__(self, dimensions, shape, distributor=None):
         # Create the SubDomain's SubDimensions
         sub_dimensions = []
         for d in dimensions:
@@ -533,6 +533,11 @@ class SubDomainSet(SubDomain):
         # Compute the SubDomain shape
         self._shape = tuple(s - (sum(d._thickness_map.values()) if d.is_Sub else 0)
                             for d, s in zip(self._dimensions, shape))
+        if distributor.is_parallel:
+            # Now create local bounds based on distributor
+            raise NotImplementedError
+        else:
+            self._local_bounds = self._global_bounds
 
     @property
     def n_domains(self):
@@ -540,17 +545,17 @@ class SubDomainSet(SubDomain):
 
     @property
     def bounds(self):
-        return self._bounds
+        return self._local_bounds
 
     def _create_implicit_exprs(self):
-        if not len(self._bounds) == 2*len(self.dimensions):
+        if not len(self._global_bounds) == 2*len(self.dimensions):
             raise ValueError("Left and right bounds must be supplied for each dimension")
         n_domains = self.n_domains
         i_dim = self.implicit_dimension
         dat = []
         # Organise the data contained in 'bounds' into a form such that the
         # associated implicit equations can easily be created.
-        for j in range(len(self._bounds)):
+        for j in range(len(self._global_bounds)):
             index = floor(j/2)
             d = self.dimensions[index]
             if j % 2 == 0:
@@ -560,10 +565,10 @@ class SubDomainSet(SubDomain):
             func = Function(name=fname, shape=(n_domains, ), dimensions=(i_dim, ),
                             dtype=np.int32)
             # Check if shorthand notation has been provided:
-            if isinstance(self._bounds[j], int):
-                bounds = np.full((n_domains,), self._bounds[j], dtype=np.int32)
+            if isinstance(self._global_bounds[j], int):
+                bounds = np.full((n_domains,), self._global_bounds[j], dtype=np.int32)
                 func.data[:] = bounds
             else:
-                func.data[:] = self._bounds[j]
+                func.data[:] = self._global_bounds[j]
             dat.append(Eq(d.thickness[j % 2][0], func[i_dim]))
         return as_tuple(dat)
