@@ -535,7 +535,22 @@ class SubDomainSet(SubDomain):
                             for d, s in zip(self._dimensions, shape))
         if distributor.is_parallel:
             # Now create local bounds based on distributor
-            raise NotImplementedError
+            processed = []
+            for i in range(len(self._global_bounds)):
+                j = int(np.floor(i/len(distributor.decomposition)))
+                b = self._global_bounds[i]
+                d = distributor.decomposition[j]
+                bounds = np.zeros(b.shape, dtype=b.dtype)
+                for k in range(b.size):
+                    bound = d.index_glb_to_loc(b[k])
+                    if bound:
+                        bounds[k] = bound
+                    elif np.mod(i, 2) == 0:
+                        bounds[k] = -1
+                    else:
+                        bounds[k] = -2
+                processed.append(bounds)
+            self._local_bounds = as_tuple(processed)
         else:
             self._local_bounds = self._global_bounds
 
