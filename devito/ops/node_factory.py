@@ -2,7 +2,7 @@ from collections import defaultdict, OrderedDict
 
 from devito import Constant, TimeFunction
 from devito.types.dimension import SpaceDimension
-from devito.symbolics import split_affine, Byref
+from devito.symbolics import split_affine, Bypointer, Byref
 from devito.ops.types import OpsAccess, OpsAccessible, RawAccessToFloat
 from devito.ops.utils import AccessibleInfo
 

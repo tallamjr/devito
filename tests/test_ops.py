@@ -28,7 +28,7 @@ class TestOPSExpression(object):
         ('Eq(u,3*a - 4**a)', 'void OPS_Kernel_0(ACC<float> & ut0)\n'
          '{\n  ut0(0) = -2.97015324253729F;\n}'),
         ('Eq(u, u.dxl)',
-         'void OPS_Kernel_0(ACC<float> & ut0, const float * h_x)\n'
+         'void OPS_Kernel_0(const float * h_x, ACC<float> & ut0)\n'
          '{\n  float r0 = 1.0/(*h_x);\n  '
          'ut0(0) = (-2.0F*ut0(-1) + 5.0e-1F*ut0(-2) + 1.5F*ut0(0))*r0;\n}'),
         ('Eq(v,1)', 'void OPS_Kernel_0(ACC<float> & vt0)\n'

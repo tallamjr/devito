@@ -13,7 +13,7 @@ from devito.tools import Pickable, as_tuple, is_integer
 
 __all__ = ['FrozenExpr', 'Eq', 'CondEq', 'CondNe', 'Mul', 'Add', 'Pow', 'IntDiv',
            'FunctionFromPointer', 'FieldFromPointer', 'FieldFromComposite',
-           'ListInitializer', 'Byref', 'IndexedPointer', 'Macro', 'Literal',
+           'ListInitializer', 'Bypointer', 'Byref', 'IndexedPointer', 'Macro', 'Literal',
            'taylor_sin', 'taylor_cos', 'bhaskara_sin', 'bhaskara_cos',
            'INT', 'FLOAT', 'DOUBLE', 'FLOOR', 'cast_mapper']
 
