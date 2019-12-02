@@ -2,7 +2,7 @@ from collections import defaultdict, OrderedDict
 
 from devito import Constant, TimeFunction
 from devito.types.dimension import SpaceDimension
-from devito.symbolics import split_affine
+from devito.symbolics import split_affine, Byref
 from devito.ops.types import OpsAccess, OpsAccessible, RawAccessToFloat
 from devito.ops.utils import AccessibleInfo
 
@@ -88,4 +88,4 @@ class OPSNodeFactory(object):
             self.ops_args[expr] = AccessibleInfo(param, None, None)
             self.ops_params.append(param)
 
-        return Constant(name='(*%s)' % expr.name)
+        return Constant(name=('(*%s)' % expr.name))
