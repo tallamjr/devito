@@ -283,6 +283,35 @@ class ListInitializer(sympy.Expr, Pickable):
     __reduce_ex__ = Pickable.__reduce_ex__
 
 
+class Bypointer(sympy.Expr, Pickable):
+
+    """
+    Symbolic representation of the C notation ``(*symbol)``.
+    """
+
+    def __new__(cls, base):
+        if isinstance(base, str):
+            base = Symbol(base)
+        elif not isinstance(base, sympy.Expr):
+            raise ValueError("`base` must be sympy.Expr or str")
+        obj = sympy.Expr.__new__(cls, base)
+        obj._base = base
+        return obj
+
+    @property
+    def base(self):
+        return self._base
+
+    def __str__(self):
+        return "(*%s)" % ccode(self.base)
+
+    __repr__ = __str__
+
+    # Pickling support
+    _pickle_args = ['base']
+    __reduce_ex__ = Pickable.__reduce_ex__
+
+
 class Byref(sympy.Expr, Pickable):
 
     """

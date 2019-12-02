@@ -88,4 +88,5 @@ class OPSNodeFactory(object):
             self.ops_args[expr] = AccessibleInfo(param, None, None)
             self.ops_params.append(param)
 
-        return Constant(name=('(*%s)' % expr.name))
+        # return Constant(name=('(*%s)' % expr.name))
+        return Bypointer(expr)

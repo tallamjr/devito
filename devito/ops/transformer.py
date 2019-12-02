@@ -323,5 +323,9 @@ def make_ops_ast(expr, nfops, is_write=False):
         return expr.func(
             make_ops_ast(expr.lhs, nfops, True),
             make_ops_ast(expr.rhs, nfops))
+    elif expr.is_Pow:
+        print('IS POW!')
+        from IPython import embed
+        embed()
     else:
         return expr.func(*[make_ops_ast(i, nfops) for i in expr.args])

@@ -118,6 +118,7 @@ class CodePrinter(C99CodePrinter):
     def _print_IntDiv(self, expr):
         return expr.__str__()
 
+    _print_Bypointer = _print_IntDiv
     _print_Byref = _print_IntDiv
     _print_IndexedPointer = _print_IntDiv
 
