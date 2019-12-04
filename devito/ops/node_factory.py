@@ -1,9 +1,9 @@
 from collections import defaultdict, OrderedDict
 
-from devito import Constant, TimeFunction
+from devito import TimeFunction
 from devito.types.dimension import SpaceDimension
-from devito.symbolics import split_affine, Byref
-from devito.ops.types import OpsAccess, OpsAccessible, RawAccessToFloat
+from devito.symbolics import split_affine
+from devito.ops.types import OpsAccess, OpsAccessible, RawAccess, RawAccessible
 from devito.ops.utils import AccessibleInfo
 
 
@@ -83,10 +83,10 @@ class OPSNodeFactory(object):
         Constant
             Constant symbol, as a pointer.
         """
-        if expr not in self.ops_args:
 
-            param = RawAccessToFloat(name=expr.name, dtype=expr.dtype)
+        if expr not in self.ops_args:
+            param = RawAccessible(expr.name, expr.dtype)
             self.ops_args[expr] = AccessibleInfo(param, None, None)
             self.ops_params.append(param)
 
-        return Constant(name=('(*%s)' % expr.name))
+        return RawAccess(expr)

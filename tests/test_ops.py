@@ -31,7 +31,7 @@ class TestOPSExpression(object):
          '{\n  ut00(0) = -2.97015324253729F;\n}'),
         ('Eq(u, u.dxl)',
          'void OPS_Kernel_0(ACC<float> & ut00, const float * h_x)\n'
-         '{\n  float r0 = 1.0/*h_x;\n  '
+         '{\n  float r0 = 1.0/(*h_x);\n  '
          'ut00(0) = (-2.0F*ut00(-1) + 5.0e-1F*ut00(-2) + 1.5F*ut00(0))*r0;\n}'),
         ('Eq(v,1)', 'void OPS_Kernel_0(ACC<float> & vt00)\n'
          '{\n  vt00(0, 0) = 1;\n}'),
@@ -54,9 +54,15 @@ class TestOPSExpression(object):
          'void OPS_Kernel_0(const ACC<float> & ut00, ACC<float> & ut10)\n'
          '{\n  ut10(0) = 1 + ut00(0);\n}'),
         ('Eq(v.forward, v.dt - v.laplace + v.dt)',
+<<<<<<< HEAD
          'void OPS_Kernel_0(const ACC<float> & vt00, ACC<float> & vt10, '
          'const float * dt, const float * h_x, const float * h_y)\n'
          '{\n  float r2 = 1.0/*dt;\n'
+=======
+         'void OPS_Kernel_0(const float * dt, const float * h_x, const float * h_y, '
+         'const ACC<float> & vt0, ACC<float> & vt1)\n'
+         '{\n  float r2 = 1.0/(*dt);\n'
+>>>>>>> ops: adding RawAccess/RawAccessible
          '  float r1 = 1.0/((*h_y)*(*h_y));\n'
          '  float r0 = 1.0/((*h_x)*(*h_x));\n'
          '  vt10(0, 0) = (-(vt00(1, 0) + vt00(-1, 0)) + 2.0F*vt00(0, 0))*r0 + '

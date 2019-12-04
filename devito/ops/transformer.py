@@ -37,7 +37,7 @@ def opsit(trees, count, name_to_ops_dat, block, dims):
                        for expr in expressions]
 
     parameters = sorted(node_factory.ops_params,
-                        key=lambda i: (i.is_Constant, i.name))
+                        key=lambda i: (i.is_Constant, i._C_name))
 
     stencil_arrays_initializations = []
     par_to_ops_stencil = {}
@@ -271,9 +271,9 @@ def create_ops_arg(p, accessible_origin, name_to_ops_dat, par_to_ops_stencil):
     elements_per_point = 1
     dtype = Literal('"%s"' % dtype_to_cstr(p.dtype))
 
-    if p.is_Constant:
+    if p.is_Scalar:
         ops_type = namespace['ops_arg_gbl']
-        ops_name = Byref(Constant(name=p.name))
+        ops_name = Byref(Constant(name=p._C_name))
         rw_flag = namespace['ops_read']
     else:
         ops_type = namespace['ops_arg_dat']
