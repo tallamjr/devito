@@ -26,7 +26,7 @@ def get_blocksizes(op, dle, grid, blockshape, level=0):
         assert len(blocksizes) == 0
         return {}
 
-shape = (50, 50, 50)
+shape = (200, 200, 200)
 spacing = (10., 10., 10.)
 
 parser = ArgumentParser(description="Some parser")
@@ -36,16 +36,16 @@ parser.add_argument('-b', dest='blocksize', default=4, type=int,
 args = parser.parse_args()
 
 
-tn=500
+tn=50
 
 blockinner = True
 
 blocking_params = {'dle':('blocking', {'openmp': True, 'blockalways': True,
                                       'blockinner': blockinner})}
 
-solver = acoustic_setup(shape, spacing, tn, **blocking_params)
+solver = acoustic_setup(shape, spacing, tn, space_order=16, kernel='OT4', **blocking_params)
 
-sizes = list(range(1, 64))
+sizes = list(range(1, 32))
 
 f_times = []
 g_times = []
