@@ -2,6 +2,7 @@
 
 ![Build Status](https://travis-ci.org/devitocodes/devito.svg?branch=master)
 ![Code Coverage](https://codecov.io/gh/devitocodes/devito/branch/master/graph/badge.svg)
+![asv](http://img.shields.io/badge/benchmarked%20by-asv-blue.svg?style=flat)
 
 [Devito](http://www.devitoproject.org) is a software to
 implement optimised finite difference (FD) computation from
