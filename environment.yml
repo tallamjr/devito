@@ -3,40 +3,31 @@ channels:
   - defaults
   - conda-forge
 dependencies:
-  - cached-property
-  - click
-  - cgen
-  - codecov
-  - cython
-  - distributed>=1.27
-  - flake8>=2.1.0
-  - frozendict
-  - matplotlib
-  - multidict
-  - nbval
-  - nb_conda_kernels
-  - numpy>=1.14
-  - parso>=0.1.0
-  - pip>=9.0.1
-  - psutil>=5.1.0
-  - pytest-cov
   - python=3
-  - pytest
+  - numpy>=1.14
+  - sympy>=1.4
+  - cgen
   - scipy
+  - matplotlib
+  - pytest
+  - flake8>=2.1.0
+  - parso>=0.1.0
+  - nbval
+  - cached-property
+  - psutil>=5.1.0
   - sphinx
   - sphinx_rtd_theme
-  - sympy>=1.4
+  - distributed>=1.27
+  - cython
+  - click
+  - codecov
+  - pytest-cov
+  - multidict
+  - frozendict
+  - nb_conda_kernels
+  - pip
   - pip:
-    - anytree>=2.4.3
-    - cached-property
-    - "git+https://github.com/inducer/cgen"
     - "git+https://github.com/inducer/codepy"
-    - coverage<5.0
-    - jedi
     - pyrevolve>=2.1.3
     - py-cpuinfo
-    - pytest>=3.6
-    - pytest-runner
-    - py-cpuinfo
-    - pyrevolve>=2.1.3
-    - nbval
+    - anytree>=2.4.3
